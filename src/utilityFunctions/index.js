@@ -126,48 +126,6 @@ export const handleButton = (setIndex, index) => {
 }
 
 
-const isUserAgeBelow18 = (dob) => {
-    //set date based on birthday at 01:00:00 hours GMT+0100 (CET)
-
-    let userBirthday = new Date(dob);
-
-    // set current day on 01:00:00 hours GMT+0100 (CET)
-
-    let currentDate = new Date().toJSON().slice(0, 10) + ' 01:00:00';
-
-    // calculate age comparing current date and birthday
-    let userAge = ~~((Date.now(currentDate) - userBirthday) / (31557600000));
-
-    return userAge < 18
-
-    // if (userAge < 18) {
-    //     return false
-    // } else {
-    //     return true
-    // }
-}
-
-const isUserAgeAbove120 = (dob) => {
-    //set date based on birthday at 01:00:00 hours GMT+0100 (CET)
-
-    let userBirthday = new Date(dob);
-
-    // set current day on 01:00:00 hours GMT+0100 (CET)
-
-    let currentDate = new Date().toJSON().slice(0, 10) + ' 01:00:00';
-
-    // calculate age comparing current date and birthday
-    let userAge = ~~((Date.now(currentDate) - userBirthday) / (31557600000));
-
-    return userAge > 120
-
-    // if (userAge > 120) {
-    //     return false
-    // } else {
-    //     return true
-    // }
-}
-
 
 
 

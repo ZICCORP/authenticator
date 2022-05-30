@@ -1,27 +1,50 @@
 // react imports
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // third party imports
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Button from '@mui/material/Button';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { TextField, Grid, Paper, IconButton, InputAdornment, Avatar, Divider } from '@mui/material';
-import { Link as Linked } from 'react-router-dom';
+import { Link as Linked, useNavigate } from 'react-router-dom';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import LoadingButton from '@mui/lab/LoadingButton';
 import { useFormik } from 'formik';
+import GoogleButton from 'react-google-button';
 
 // internal imports
 import { handleClickShowPassword, handleMouseDownPassword } from '../../../utilityFunctions';
-import { useGlobalContext } from '../../App';
+import { useUserAuth } from '../../../context/UserAuthContext';
+
 //  styles import
 import { paperStyle, btnStyleLogin, createNewAccount_btn_style, createNewAccount_link_style, forgotten_account_link_style, dividerStyle } from '../../../Styles';
 
 
 
+const Alert = React.forwardRef(function Alert(props, ref) {
+    return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
+
 
 const LoginView = () => {
-    const { appState } = useGlobalContext();
+    // const { appState } = useGlobalContext();
+    const { appState, login, googleSignIn } = useUserAuth()
     const [showPassword, setShowPassword] = useState(false);
-
+    const [error, setError] = useState('');
+    const [open, setOpen] = useState(true)
+    const [load, setLoad] = useState(false)
+    const navigate = useNavigate();
+    const handleGoogleSignin = async (e) => {
+        e.preventDefault();
+        try {
+            await googleSignIn();
+            navigate("/")
+        } catch (err) {
+            setError(err.message)
+            alert(err.message)
+        }
+    }
 
 
     const validate = values => {
@@ -51,10 +74,38 @@ const LoginView = () => {
         },
         validate,
 
-        onSubmit: values => {
-            alert(JSON.stringify(values, null, 2))
+        onSubmit: async (values) => {
+            setError('');
+            setLoad(true)
+            try {
+                await login(values.email, values.password)
+                navigate('/')
+            } catch (err) {
+                setError(err.message)
+                setLoad(false)
+            }
         }
     })
+
+
+    const handleClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        setOpen(false);
+    };
+
+
+
+    useEffect(() => {
+        if (error) {
+            setOpen(true)
+        } else {
+            setOpen(false)
+        }
+    }, [error])
+
 
     return <>
         <Paper elevation={appState.mobileView ? 0 : 10} style={{ ...paperStyle, height: '90vh', backgroundColor: '#fff' }}>
@@ -82,16 +133,25 @@ const LoginView = () => {
                     variant="outlined"
                     required />
 
+                {load ? <LoadingButton loading variant="contained" style={{ width: '94%', marginTop: '10px', marginLeft: '10px' }}>
+                    Submit
+                </LoadingButton> : <Button type='submit' variant='contained' style={formik.isValid && formik.touched.email ? btnStyleLogin : { ...btnStyleLogin, backgroundColor: 'grey', color: '#fff' }} disabled={formik.isValid && formik.touched.email ? false : true} fullWidth>Log in</Button>
+                }
 
-                <Button type='submit' variant='contained' style={formik.isValid && formik.touched.email ? btnStyleLogin : { ...btnStyleLogin, backgroundColor: 'grey', color: '#fff' }} disabled={formik.isValid && formik.touched.email ? false : true} fullWidth>Log in</Button>
+
             </form>
-
+            <GoogleButton style={{ width: '94%', marginTop: '10px', marginLeft: '10px', marginBottom: '20px' }} className='g-btn' type='dark' onClick={handleGoogleSignin} />
             <Linked align='center' to='#' style={forgotten_account_link_style} >Forgotten account?</Linked>
             <Divider style={dividerStyle}>or</Divider>
 
             <Linked to='/signup' style={createNewAccount_link_style}> <Button type='submit' variant='contained' style={createNewAccount_btn_style}>Create New Account</Button></Linked>
 
         </Paper>
+        {error && <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+            <Alert onClose={handleClose} severity="error" sx={{ width: '100%' }}>
+                {error}
+            </Alert>
+        </Snackbar>}
 
     </>
 }

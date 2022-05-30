@@ -1,22 +1,39 @@
 // react imports
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Third party imports
-import { Link as Linked } from 'react-router-dom';
+import { Link as Linked, useNavigate } from 'react-router-dom';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { Button, Box, Grid, Paper, Typography, TextField, IconButton, InputAdornment } from '@mui/material';
-import { useFormik } from 'formik'
+import { useFormik } from 'formik';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import LoadingButton from '@mui/lab/LoadingButton';
+import { collection, addDoc } from "firebase/firestore";
 
 // Internal imports
 import { handleMouseDownPassword, handleClickShowPassword, validate } from '../../../utilityFunctions';
+import { useUserAuth } from '../../../context/UserAuthContext';
+import { db } from '../../../firebase';
+
 
 // styles imports
 import { desktop_mobile_signup_btnStyle, mobile_signup_paperStyle, mobile_signup_box_style, already_have_account_Link_style, mobile_signup_textfield } from '../../../Styles';
 
 
+
+const Alert = React.forwardRef(function Alert(props, ref) {
+    return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
+
 const SignUpMobileView = (props) => {
 
     const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState('');
+    const [open, setOpen] = useState(true)
+    const [load, setLoad] = useState(false)
+    const { signup } = useUserAuth();
+    const navigate = useNavigate();
 
 
     const formik = useFormik({
@@ -30,10 +47,43 @@ const SignUpMobileView = (props) => {
 
         },
         validate,
-        onSubmit: values => {
-            alert(JSON.stringify(values, null, 2))
+        onSubmit: async (values) => {
+
+            setError('');
+            setLoad(true);
+            try {
+                await signup(values.email, values.password)
+                await addDoc(collection(db, "users"), {
+                    firstName: values.firstName,
+                    lastName: values.lastName,
+                    phoneNum: values.phoneNum,
+                });
+                navigate('/signin')
+            } catch (err) {
+                setError(err.message)
+                setLoad(false)
+            }
         }
     });
+
+    const handleClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        setOpen(false);
+    };
+
+
+
+    useEffect(() => {
+        if (error) {
+            setOpen(true)
+        } else {
+            setOpen(false)
+        }
+    }, [error])
+
 
 
 
@@ -82,11 +132,22 @@ const SignUpMobileView = (props) => {
                         <TextField style={mobile_signup_textfield} label="Comfirm password" id="confirmPassword" name='confirmPassword' type='password' onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.confirmPassword} error={formik.touched.confirmPassword && formik.errors.confirmPassword ? true : false} helperText={formik.touched.confirmPassword && formik.errors.confirmPassword ? formik.errors.confirmPassword : ''} required fullWidth />
 
 
-                        <Button type='submit' variant='contained' style={!formik.isValid || !formik.touched.firstName ? { ...desktop_mobile_signup_btnStyle, backgroundColor: 'grey', color: 'white' } : desktop_mobile_signup_btnStyle} disabled={formik.errors.firstName || !formik.touched.firstName || formik.errors.lastName ? true : false} fullWidth>Sign up</Button>
+                        {load ? <LoadingButton loading variant="contained" style={{ width: '94%', marginTop: '10px', marginLeft: '10px' }}>
+                            Submit
+                        </LoadingButton> :
+                            <Button type='submit' variant='contained' style={!formik.isValid || !formik.touched.firstName ? { ...desktop_mobile_signup_btnStyle, backgroundColor: 'grey', color: 'white' } : desktop_mobile_signup_btnStyle} disabled={formik.errors.firstName || !formik.touched.firstName || formik.errors.lastName ? true : false} fullWidth>Sign up</Button>}
+
+
                         <Linked to='/signin' style={{ ...already_have_account_Link_style, marginLeft: '50px' }}>Already have an account?</Linked>
 
                     </form>
+                    {error && <Snackbar open={open} autoHideDuration={6000} onClose={handleClose} style={{ height: '200px', marginTop: '1px', marginLeft: '10px', marginRight: '10px', marginBottom: '-10px' }}>
+                        <Alert onClose={handleClose} severity="error" >
+                            {error}
+                        </Alert>
+                    </Snackbar>}
                 </Paper>
+
             </Grid>
 
 

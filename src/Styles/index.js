@@ -9,7 +9,7 @@ export const colorStyle = { color: '#1bbd7e' }
 
 export const gender_label_text_color = { color: '#505050' }
 export const typographyStyle = { fontSize: 'small' }
-export const btnStyleLogin = { margin: '20px 0', backgroundColor: '#1bbd7e', textTransform: 'capitalize' }
+export const btnStyleLogin = { margin: '20px 0', marginLeft: '10px', width: '94%', backgroundColor: '#1bbd7e', textTransform: 'capitalize' }
 export const btnStyle = { margin: '8px 0', backgroundColor: '#1bbd7e' }
 export const desktop_mobile_signup_btnStyle = { margin: '8px 0', backgroundColor: 'orange' }
 export const popupview_signup_btn = { color: '#FFFFFF', backgroundColor: '#1bbd7e', margin: "20px auto", width: '150px' }
